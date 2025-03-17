@@ -2,7 +2,7 @@ from dataclasses import dataclass, field
 
 from lostcitinacki.models.constants import Color, DrawFromStack, Action
 from lostcitinacki.models.game_state import GameState
-from lostcitinacki.models.logs import GameLog, Event
+from lostcitinacki.models.log import GameLog, Event
 from lostcitinacki.models.piles import Discard
 from lostcitinacki.players import Player
 from lostcitinacki.renderers import Renderer

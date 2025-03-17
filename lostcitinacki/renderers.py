@@ -3,7 +3,7 @@ import time
 
 from lostcitinacki.players import Player
 from lostcitinacki.models.game_state import GameState
-from lostcitinacki.models.logs import GameLog
+from lostcitinacki.models.log import GameLog
 
 
 class Renderer(metaclass=abc.ABCMeta):
