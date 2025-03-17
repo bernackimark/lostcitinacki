@@ -1,24 +1,31 @@
 from dataclasses import dataclass, field
+from datetime import datetime
+from typing import TYPE_CHECKING
 
-from lostcitinacki.models import GameState
-from lostcitinacki.models.cards import Card
-from lostcitinacki.models.constants import PlayToStack, DrawFromStack
+from lostcitinacki.models.constants import Action
 from lostcitinacki.models.stack import Stack
 
+if TYPE_CHECKING:
+    from lostcitinacki.models.game_state import GameState
 
-@dataclass
-class Move:
-    player_idx: int
-    card: Card
-    played_card_to: PlayToStack
-    picked_up_from: DrawFromStack
-    prior_game_state: "GameState"
-    after_game_state: "GameState"
+
+@dataclass(frozen=True)
+class Event:
+    game_state: "GameState"
+    action: Action
+    player_idx: int = None
+    attributes: dict = field(default_factory=dict)
+    timestamp: datetime = datetime.now()
+
+    def __repr__(self) -> str:
+        return (f"Timestamp: {self.timestamp}\n"
+                f"Action: {self.action.name}\n"
+                f"Player ID: {self.player_idx}\n"
+                f"Game State: {self.game_state}\n"
+                f"Attributes: {self.attributes}\n")
 
 
 @dataclass
 class GameLog(Stack):
-    moves: list[Move] = field(default_factory=list)
+    events: list[Event] = field(default_factory=list)
 
-    def log_move(self, move: Move) -> None:
-        self.moves.append(move)
