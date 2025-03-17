@@ -40,3 +40,6 @@ class Stack(Generic[T]):
 
     def peek(self) -> T | None:
         return self._items[-1] if self._items else None
+
+    def reveal(self) -> list[T]:
+        return self._items
