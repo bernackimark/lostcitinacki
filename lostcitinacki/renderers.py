@@ -3,6 +3,7 @@ import time
 
 from lostcitinacki.players import Player
 from lostcitinacki.models.game_state import GameState
+from lostcitinacki.models.logs import GameLog
 
 
 class Renderer(metaclass=abc.ABCMeta):
@@ -13,6 +14,10 @@ class Renderer(metaclass=abc.ABCMeta):
     @abc.abstractmethod
     def render_error(self, exc: Exception) -> None:
         """Render an exception"""
+
+    @abc.abstractmethod
+    def render_log(self, game_log: GameLog) -> None:
+        """Render the game log"""
 
 
 class ConsoleRenderer(Renderer):
@@ -45,10 +50,13 @@ class ConsoleRenderer(Renderer):
                 winner_names = 'and '.join([p.name for i, p in enumerate(players) for idx in gs.winner if i == idx])
                 points = gs.winner[0][1]
                 print(f"{winner_names} tied with {points} {'points' if gs.scorer.ledgers[0].total != 1 else 'point'}")
-            print('Thank you for playing.  Goodbye!')
+            print('Thank you for playing.  Goodbye!\n')
             time.sleep(2)
 
     def render_error(self, exc: Exception) -> None:
         print(f"Something's gone wrong: {exc}")
         print()
 
+    def render_log(self, game_log: GameLog) -> None:
+        for event in game_log:
+            print(event)
