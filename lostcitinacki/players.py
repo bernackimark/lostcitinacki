@@ -1,59 +1,59 @@
 from abc import ABC, abstractmethod
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 import random
 
-from models import Card, Color, Discard, DrawFromStack, ExpeditionBoard, Hand, PlayToStack
+from lostcitinacki.models.cards import Card
+from lostcitinacki.models.constants import DrawFromStack, PlayToStack
+from lostcitinacki.models.piles import Hand
 
 @dataclass
 class Player(ABC):
+    idx: int
     name: str
-    hand: Hand = field(default_factory=Hand)
-    expeditions: ExpeditionBoard = field(default_factory=ExpeditionBoard)
-    round_scores: list[int] = field(default_factory=list)
-
-    @property
-    def points(self) -> int:
-        return sum(self.round_scores) if self.round_scores else 0
 
     @abstractmethod
-    def play_card(self, board_playable_cards: list[Card]) -> tuple[Card, PlayToStack]:
+    def play_card(self, h: Hand, board_playable_cards: list[Card]) -> tuple[Card, PlayToStack]:
         ...
 
+    def pick_up_from(self, can_pick_up_discard: bool, is_discard_card_playable: bool) -> DrawFromStack:
+        """Method that applies to all children and ensures this check runs first
+        If player cannot pick up from discard, Deck is returned without yielding to child method
+        Else, child may pick up from Deck or Discard; Bot will pick from Deck if top discard is not playable"""
+        if not can_pick_up_discard:
+            return DrawFromStack.DECK
+        return self._child_pick_up_from(is_discard_card_playable)
+
     @abstractmethod
-    def pick_up_from(self, played_to: Color | Discard, discard_has_cards: bool) -> DrawFromStack:
+    def _child_pick_up_from(self, is_discard_card_playable: bool) -> DrawFromStack:
         ...
 
 
 @dataclass
 class ConsolePlayer(Player):
-    def play_card(self, board_playable_cards: list[Card]) -> tuple[Card, PlayToStack]:
-        while True:
+    def play_card(self, h: Hand, board_playable_cards: list[Card]) -> tuple[Card, PlayToStack]:
+        card, exp_or_discard = None, None
+        while card is None:
             sel_card = input('Select a card to play: ')
-            card = next((c for c in self.hand if c.__repr__() == sel_card), None)
-            if card is not None:
-                break
-        while True:
-            value = input('Play to expedition or discard (e/d): ')
-            if value in ('e', 'd'):
-                return card, PlayToStack.EXPEDITION if value == 'e' else PlayToStack.DISCARD
+            card = next((c for c in h if c.__repr__() == sel_card), None)
+        while exp_or_discard not in ('e', 'd'):
+            exp_or_discard = input('Play to expedition or discard (e/d): ')
+        return card, PlayToStack.EXPEDITION if exp_or_discard == 'e' else PlayToStack.DISCARD
 
-    def pick_up_from(self, played_to: Color | Discard, discard_has_cards: bool) -> DrawFromStack:
-        if played_to is Discard or not discard_has_cards:
-            return DrawFromStack.DECK
-        while True:
+    def _child_pick_up_from(self, is_discard_card_playable: bool) -> DrawFromStack:
+        value, allowed_values = None, ('de', 'di')
+        while value not in allowed_values:
             value = input('Pick up from deck or discard (de/di): ')
-            if value in ('de', 'di'):
-                return DrawFromStack.DECK if value == 'de' else DrawFromStack.DISCARD
+        return DrawFromStack.DECK if value == 'de' else DrawFromStack.DISCARD
 
 @dataclass
 class BotPlayer(Player):
-    def play_card(self, board_playable_cards: list[Card]) -> tuple[Card, PlayToStack]:
-        playable_cards = [card for card in self.hand.cards if card in board_playable_cards]
+    def play_card(self, h: Hand, board_playable_cards: list[Card]) -> tuple[Card, PlayToStack]:
+        playable_cards = [card for card in h.cards if card in board_playable_cards]
         if not playable_cards:
-            return random.choice(self.hand.cards), PlayToStack.DISCARD
+            return random.choice(h.cards), PlayToStack.DISCARD
         return random.choice(playable_cards), PlayToStack.EXPEDITION
 
-    def pick_up_from(self, played_to: Color | Discard, discard_has_cards: bool) -> DrawFromStack:
-        if played_to is Discard or not discard_has_cards:
+    def _child_pick_up_from(self, is_discard_card_playable: bool) -> DrawFromStack:
+        if not is_discard_card_playable:
             return DrawFromStack.DECK
         return DrawFromStack.DECK if random.randint(1, 10) > 8 else DrawFromStack.DISCARD
