@@ -1,38 +1,24 @@
-import abc
 import time
 
-from lostcitinacki.players import Player
-from lostcitinacki.models.game_state import GameState
-from lostcitinacki.models.log import GameLog
-
-
-class Renderer(metaclass=abc.ABCMeta):
-    @abc.abstractmethod
-    def render(self, game_state: GameState, players: list[Player]) -> None:
-        """Render the current game state & player information"""
-
-    @abc.abstractmethod
-    def render_error(self, exc: Exception) -> None:
-        """Render an exception"""
-
-    @abc.abstractmethod
-    def render_log(self, game_log: GameLog) -> None:
-        """Render the game log"""
+from gamenacki.common.log import Log
+from gamenacki.common.base_renderer import Renderer
+from gamenacki.lostcitinacki.players import Player
+from gamenacki.lostcitinacki.models.game_state import GameState
 
 
 class ConsoleRenderer(Renderer):
     def render(self, gs: GameState, players: list[Player]) -> None:
         if not gs.has_round_started:
-            print(f"This is round #{gs.current_round_number} of {gs.max_rounds}")
-            print(f"{players[gs.dealer_idx].name} is the dealer; {players[gs.player_turn_idx].name} plays first")
+            print(f"This is round #{gs.dealer.current_round_number} of {gs.max_rounds}")
+            print(f"{players[gs.dealer.dealer_idx].name} is the dealer; {players[gs.dealer.player_turn_idx].name} plays first")
             print()
 
         if not gs.is_round_over and not gs.is_round_over:
-            print('Their Expeditions:', gs.exp_boards[1].expeditions)
-            print('Discard:', gs.discard.cards[-1] if gs.discard.cards else '[]', 'Deck:',
-                  '*' * len(gs.deck.cards))
-            print('Your Expeditions: ', gs.exp_boards[0].expeditions)
-            print('Your Hand:', gs.hands[0].cards)
+            print('Their Expeditions:', gs.piles.exp_boards[1].expeditions)
+            print('Discard:', gs.piles.discard.cards[-1] if gs.piles.discard.cards else '[]', 'Deck:',
+                  '*' * len(gs.piles.deck.cards))
+            print('Your Expeditions: ', gs.piles.exp_boards[0].expeditions)
+            print('Your Hand:', gs.piles.hands[0].cards)
             print()
 
         if gs.is_round_over:
@@ -57,6 +43,6 @@ class ConsoleRenderer(Renderer):
         print(f"Something's gone wrong: {exc}")
         print()
 
-    def render_log(self, game_log: GameLog) -> None:
+    def render_log(self, game_log: Log) -> None:
         for event in game_log:
             print(event)

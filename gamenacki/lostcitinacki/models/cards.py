@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 
-from lostcitinacki.models.constants import Color
+from gamenacki.lostcitinacki.models.constants import Color
 
 
 @dataclass

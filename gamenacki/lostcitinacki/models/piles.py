@@ -1,32 +1,10 @@
-# piles.py
 """A module for collections of cards"""
 
-import random
 from dataclasses import dataclass, field
 
-from lostcitinacki.models.cards import Card, Handshake, ExpeditionCard
-from lostcitinacki.models.constants import Color
-from lostcitinacki.models.stack import Stack
-
-
-@dataclass
-class CardStack(Stack):
-    """This subclass' purpose is to have callers use the attribute 'cards' instead of the generic 'items'.
-    If something subclasses CardStack & wants to initialize with cards, it will still need to use '_items --
-     ex: _items: list[Card] = field(default_factory=build_deck)"""
-    _items: list[Card] = field(default_factory=list)
-
-    @property
-    def cards(self) -> list:
-        return self._items
-
-    @cards.setter
-    def cards(self, value: list):
-        if not isinstance(value, list):
-            raise ValueError("cards must be a list")
-        for item in value:
-            self.push(item)  # Ensure each item is of type Card when setting cards
-        self._items = value
+from gamenacki.common.piles import CardStack, BaseDeck, Hand, Discard
+from gamenacki.lostcitinacki.models.cards import Card, Handshake, ExpeditionCard
+from gamenacki.lostcitinacki.models.constants import Color
 
 
 @dataclass
@@ -64,6 +42,7 @@ def create_board() -> list[Expedition]:
 
 @dataclass
 class ExpeditionBoard:
+    """One ExpeditionBoard is given to each play; it's a collection of color expeditions"""
     expeditions: list[Expedition] = field(default_factory=create_board)
 
     def __repr__(self) -> str:
@@ -85,27 +64,18 @@ class ExpeditionBoard:
 
 
 @dataclass
-class Hand(CardStack):
-    ...
+class Deck(BaseDeck):
+    @staticmethod
+    def build_deck() -> list[Card]:
+        handshakes: list[Handshake] = [Handshake(c) for c in list(Color) for _ in range(3)]
+        expeditions: list[ExpeditionCard] = [ExpeditionCard(c, v) for c in list(Color) for v in range(6, 11)]
+        return handshakes + expeditions
 
 
 @dataclass
-class Discard(CardStack):
-    ...
-
-
-def build_deck() -> list[Card]:
-    # handshakes: list[Handshake] = [Handshake(c) for c in list(Color) for _ in range(3)]
-    expeditions: list[ExpeditionCard] = [ExpeditionCard(c, v) for c in list(Color) for v in range(6, 11)]
-    # return handshakes + expeditions
-    return expeditions
-
-
-@dataclass
-class Deck(CardStack):
-    _items: list[Card] = field(default_factory=build_deck)
-    start_shuffled: bool = True
-
-    def __post_init__(self):
-        if self.start_shuffled:
-            random.shuffle(self._items)
+class Piles:
+    """deck & discard are being populated here; hands & exp boards are populated elsewhere as they are 1 per player"""
+    hands: list[Hand] = field(default_factory=list)
+    deck: Deck = field(default_factory=Deck)
+    discard: Discard = field(default_factory=Discard)
+    exp_boards: list[ExpeditionBoard] = field(default_factory=list)

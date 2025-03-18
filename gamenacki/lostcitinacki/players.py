@@ -1,10 +1,12 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 import random
+import time
 
-from lostcitinacki.models.cards import Card
-from lostcitinacki.models.constants import DrawFromStack, PlayToStack
-from lostcitinacki.models.piles import Hand
+from gamenacki.lostcitinacki.models.cards import Card
+from gamenacki.lostcitinacki.models.constants import DrawFromStack, PlayToStack
+from gamenacki.common.piles import Hand
+
 
 @dataclass
 class Player(ABC):
@@ -48,12 +50,14 @@ class ConsolePlayer(Player):
 @dataclass
 class BotPlayer(Player):
     def play_card(self, h: Hand, board_playable_cards: list[Card]) -> tuple[Card, PlayToStack]:
+        time.sleep(0.5)
         playable_cards = [card for card in h.cards if card in board_playable_cards]
         if not playable_cards:
             return random.choice(h.cards), PlayToStack.DISCARD
         return random.choice(playable_cards), PlayToStack.EXPEDITION
 
     def _child_pick_up_from(self, is_discard_card_playable: bool) -> DrawFromStack:
+        time.sleep(0.5)
         if not is_discard_card_playable:
             return DrawFromStack.DECK
         return DrawFromStack.DECK if random.randint(1, 10) > 8 else DrawFromStack.DISCARD

@@ -1,9 +1,11 @@
-# constants.py
+# base_constants.py
 """Contains enums"""
 
 from enum import StrEnum, auto
 
-class Action(StrEnum):
+from gamenacki.common.base_constants import BaseAction
+
+class Action(BaseAction):
     BEGIN_GAME = auto()
     BEGIN_ROUND = auto()
     PLAY_CARD = auto()
